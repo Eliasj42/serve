@@ -266,12 +266,18 @@ public final class ConfigManager {
             prop.setProperty(TS_DISABLE_TOKEN_AUTHORIZATION, tokenDisabled);
         }
 
+        logger.warn("TS NUMBER OF GPU: " + TS_NUMBER_OF_GPU);
+
         prop.setProperty(
                 TS_NUMBER_OF_GPU,
                 String.valueOf(
                         Integer.min(
                                 getAvailableGpu(),
                                 getIntProperty(TS_NUMBER_OF_GPU, Integer.MAX_VALUE))));
+
+        //prop.setProperty(
+        //        TS_NUMBER_OF_GPU, "64");
+
 
         String pythonExecutable = args.getPythonExecutable();
         if (pythonExecutable != null) {
@@ -995,6 +1001,38 @@ public final class ConfigManager {
                     }
                 } catch (IOException | InterruptedException e) {
                     logger.debug("xpu-smi not available or failed: " + e.getMessage());
+                }
+                try {
+                    Process process = Runtime.getRuntime().exec("rocm-smi");
+                    logger.debug("Running Rocm smi");
+                    int ret = process.waitFor();
+                    if (ret != 0) {
+                        return 0;
+                    }
+                    List<String> list =
+                            IOUtils.readLines(process.getInputStream(), StandardCharsets.UTF_8);
+                    if (list.isEmpty()) {
+                        throw new AssertionError("Unexpected rocm-smi response.");
+                    }
+
+                    String rocmSmiOutput = "C";
+                    Pattern rocmSmiPattern = Pattern.compile("^\\d+");
+
+                    for (int i = 1; i < list.size(); i++) {
+                        try {
+                            Matcher rocmSmiMatcher = rocmSmiPattern.matcher(list.get(i));
+                            rocmSmiMatcher.find();
+                            String numberString = rocmSmiMatcher.group(0);
+                            logger.debug("Found GPU: " + numberString);
+                            gpuIds.add(Integer.parseInt(numberString));
+                        } catch(Exception e) {
+                            logger.debug(e.getMessage());
+                        }
+                    }
+                    
+
+                } catch (IOException | InterruptedException e) {
+                    logger.debug("rocm-smi not available or failed: " + e.getMessage());
                 }
             }
             return gpuIds.size();

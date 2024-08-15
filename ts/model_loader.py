@@ -94,6 +94,8 @@ class TsModelLoader(ModelLoader):
         # Backwards Compatibility with releases <=0.6.0
         # Request ID is not set for model load requests
         # TODO: UUID serves as a temporary request ID for model load requests
+
+
         if metrics_cache is not None:
             metrics_cache.set_request_ids(str(uuid.uuid4()))
 

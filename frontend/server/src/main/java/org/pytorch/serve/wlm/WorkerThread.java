@@ -119,7 +119,9 @@ public class WorkerThread implements Runnable {
     public String getGpuUsage() {
         Process process;
         StringBuffer gpuUsage = new StringBuffer();
+        logger.error("GPUID : " + String.valueOf(gpuId));
         if (gpuId >= 0) {
+
             try {
                 // TODO : add a generic code to capture gpu details for different devices instead of
                 // just NVIDIA
@@ -136,7 +138,6 @@ public class WorkerThread implements Runnable {
                 process.waitFor();
                 int exitCode = process.exitValue();
                 if (exitCode != 0) {
-                    gpuUsage.append("failed to obtained gpu usage");
                     InputStream error = process.getErrorStream();
                     for (int i = 0; i < error.available(); i++) {
                         logger.error("" + error.read());
@@ -163,7 +164,6 @@ public class WorkerThread implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                gpuUsage.append("failed to obtained gpu usage");
                 logger.error("Exception Raised : " + e.toString());
             }
         } else {
